@@ -1,7 +1,4 @@
 # **Behavioral Cloning For Autonomous Cars** 
-
-## Writeup 
-
 ---
 
 **Goals**
@@ -16,13 +13,14 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
+[image1]: ./examples/architecture.JPG "Model Visualization"
+[image2]: ./examples/recoverycams.png "Recovery"
+[image3]: ./examples/cameras.JPG "Camera correction"
+[image4]: ./examples/cams.png "LCR Cam View"
+[image5]: ./examples/flip.png "Flip"
+[image6]: ./examples/fmap_c1.png "Feature map conv layer1"
+[image7]: ./examples/fmap_c2.png "Feature map conv layer2"
+[image8]: ./examples/sample.png "sample img for fmaps"
 
 **Description of simulator**
 
@@ -39,8 +37,7 @@ My project includes the following files and can be used to run the simulator in 
 * model.py containing the script to create and train the model
 * drive.py for driving the car in autonomous mode
 * model.h5 containing a trained convolution neural network 
-* writeup_report.md summarizing the results
-* IPython notebook for visualization
+* README.md summarizing the results
 
 **Running the simulator**
 Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
@@ -71,8 +68,8 @@ The model was trained and validated on different and large enough data sets to e
 Initial implementations included dropout layers in order to combat overfitting, but later replaced by batch normalization. The inventors of batch norm detail in their research paper that using batch norm performs equally well, if not better, than using dropout with regularization. In practice networks that use Batch Normalization are significantly more robust to bad initialization. Additionally, it can be interpreted as doing preprocessing at every layer of the network.
 
 #### 3. Model parameter tuning
-(model.py line 25)
-The model used an adam optimizer, so the learning rate was not tuned manually. Learn rate was initialized at 0.001 for training. However, for fine-tuning the trained model, learn rate was lowered to 0.0001
+
+The model used Adam optimizer, so the learning rate was not tuned manually. Learn rate was initialized at 0.001 for training. However, for fine-tuning the trained model, learn rate was lowered to 0.0001
 
 #### 4. Appropriate training data
 
@@ -98,36 +95,68 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 #### 2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+The final model architecture (model.py lines 89-136) consisted of a convolution neural network with the following layers and layer sizes:
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
+| Layer         		|     Description	        					| 
+|:---------------------:|:---------------------------------------------:| 
+| Input         		| 160x320x3 image   							| 
+| Lambda layer | Cropping 70x320x3 output shape|
+| Lambda layer | Normalizing |
+| Lambda layer | Resize: output shape 66x200x3 |
+| Convolution  |5x5 filter, 2x2 stride, 'valid' padding, outputs 31x98x24 	|
+| ELU					 |												|
+| Convolution  |5x5 filter, 2x2 stride, 'valid' padding, outputs 14x47x36 	|
+| ELU					 |												|
+| Convolution  | 5x5 filter, 2x2 stride, 'valid' padding, outputs 5x22x48  |
+| ELU					 |												|
+| Convolution  | 3x3 filter, 1x1 stride, 'valid' padding, outputs 3x20x64  |
+| ELU					 |												|
+| Convolution  | 3x3 filter, 1x1 stride, 'valid' padding, outputs 1x18x64  |
+| ELU					 |												|
+| Flatten			 |	output shape 1152			|
+| Fully connected		| input 1152, output 100 |
+| ELU					|												|
+| Fully connected		| input 100, output 50         									|
+| ELU					|												|
+| Fully connected		| input 50, output 10 |
+| ELU					|												|
+| output layer    | 1
+|						|												| 
 
-![alt text][image1]
 
 #### 3. Creation of the Training Set & Training Process
 
 Most of the training data comprised of images from the reverse route so as to keep the training and testing data separate as much as possible. This helps to identify how well the network generalizes and performs given a new scenario. 
 
-To capture good driving behavior, a dataset was generated on track one using center lane driving with smooth turns (using a joystick instead of keyboard helped). Here is an example image of center lane driving:
+To capture good driving behavior, a dataset was generated on track one using center lane driving with smooth turns (using a joystick instead of keyboard helped). 
+
+Second dataset was recorded with the vehicle driving in a erratic manner, recovering from the left side and right sides of the road back to center. This allows the vehicle to learn to recover in cases if its going off-road. These images show what a recovery looks like from left, center and right cameras respectively:
 
 ![alt text][image2]
-
-Second dataset was recorded with the vehicle driving in a erratic manner, recovering from the left side and right sides of the road back to center. This allows the vehicle to learn to recover in cases if its going off-road. These images show what a recovery looks like:
-
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
 
 Then the process was repeated to generate selective data, that is data of areas where the car had trouble originally navigating.
 
 To augment the data, images from the left and right cameras were used with a correction factor. This approach helps the car learn to steer back to the center of the lane if it goes sideways.
+![alt text][image3]
+![alt text][image4]
 Another technique to augment the data set is to flip the images and angles, essentially artificially creating unique situations. For example, here is an image that has been flipped:
 
-![alt text][image6]
-![alt text][image7]
+![alt text][image5]
 
 The data is then altered by removing the zero angle instances from the erratic and selective datasets, leaving the smooth driving set untouched. This helps reduce the bias for going straight, but not completely nulled.
 
 Finally, the data set is randomly shuffled and put 20% of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 5 as evidenced by stagnation of validation loss. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+
+### Feature Maps Visualization
+---
+**Sample input image**
+
+![alt text][image8]
+
+**First Convolutional Layer** 
+![alt text][image6]
+
+**Second Convolutional Layer**
+![alt text][image7]
