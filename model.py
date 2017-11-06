@@ -28,9 +28,6 @@ def img_read(path):
     return np.array(img)
 
 def resize(img):
-    """
-    Resizes the images in the supplied tensor to the original dimensions of the NVIDIA model (66x200)
-    """
     from keras.backend import tf as ktf
     return ktf.image.resize_images(img, [66, 200])
 
