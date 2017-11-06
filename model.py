@@ -25,7 +25,7 @@ def img_name(abs_path):
 
 def img_read(path):
     img = Image.open(path)
-    return np.array(img)#cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return np.array(img)
 
 def resize(img):
     """
@@ -90,7 +90,7 @@ def nvidia_model():
     #l2_lambda=0.0001
     #,W_regularizer=l2(l2_lambda)
     model = Sequential()
-
+    
     #model.add(Cropping2D(cropping=((65,25),(0,0)), input_shape=(160,320,3)))
     model.add(Lambda(lambda x: x[:,65:-25,:,:], input_shape=(160, 320, 3)))
     model.add(Lambda(lambda x: (x / 127.5) - 1.))
@@ -99,44 +99,37 @@ def nvidia_model():
     model.add(Convolution2D(24, 5, 5, subsample=(2, 2)))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(36, 5, 5, subsample=(2, 2)))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(48, 5, 5, subsample=(2, 2)))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(64, 3, 3))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(64, 3, 3))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
-    #model.add(Dropout(.5))
+    
     model.add(Flatten())
-    # Fully connected layers
-    model.add(Dense(1164))
-    model.add(BatchNormalization())
-    model.add(Activation('elu'))
-
-
+    
     model.add(Dense(100))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Dense(50))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Dense(10))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
-    #model.add(Dropout(.2))
+    
     model.add(Dense(1))
     model.summary()
 
@@ -149,37 +142,39 @@ def commaai_model():
     model.add(Convolution2D(16, 8, 8, subsample=(4, 4), border_mode="same"))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(32, 5, 5, subsample=(2, 2), border_mode="same"))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Convolution2D(64, 5, 5, subsample=(2, 2), border_mode="same"))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Flatten())
-
+    
     model.add(Dense(512))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-
+    
     model.add(Dense(1))
     model.summary()
 
     return model
 
+
+
+
 ## MAIN ##
 a = './data-udacity/'
 b = './data-selective/'
 c = './data-reverse/'
-d = './data-reverse-2/'
-e = './data-reverse-recover/'
-f = './data-reverse-erratic/'
-g = './data-reverse-selective/'
+d = './data-reverse-recover/'
+e = './data-reverse-erratic/'
+f = './data-reverse-selective/'
+g = './data-reverse-2/'
 
-
-paths = [c,d,e,g]
+paths = [c,d,e,f]
 
 data = load_data(paths)
 train_data, valid_data = train_test_split(data, test_size=0.2)
@@ -189,12 +184,14 @@ batch_size=64
 epochs = 5
 cameras = 3
 flip = True
-rate = 0.0001
+rate = 0.001
 
 train_generator = generator(train_data, batch_size=batch_size, cameras = cameras, flip = flip)
 valid_generator = generator(valid_data, batch_size=batch_size, cameras = cameras, flip = flip)
 
 model = nvidia_model()
+from keras.models import load_model
+#model = load_model('model.h5')
 #model= commaai_model()
 
 
